@@ -1,0 +1,38 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Aug 11 16:51:24 2018
+"""
+
+import bs4
+import requests
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+url = "https://www.topsport.lt/lazybos-siandien"
+req = requests.get(url)
+
+soup = bs4.BeautifulSoup(req.content, "lxml")
+data_selected = soup.select('span[class="prelive-list-league-rate ml-1 h-font-secondary h-fs17 h-fw500"]')
+data2 = soup.select('div[class="col d-flex order-2 order-sm-1"]')
+# data_selected and data2 is list of tags
+
+data = np.array([item.contents for item in data_selected])[:-57 - (len(data_selected))%3]
+data = data.reshape(len(data)/3,3).astype(str) # problem further go fields from 2 values
+
+#proc_data = [np.float(item[0].replace(",", "."))*np.float(item[-1].replace(",",".")) for item in data] # , -> .
+#df = pd.DataFrame(proc_data)
+
+data_frame = pd.DataFrame(data).replace({',':'.'}, regex=True).astype(float)
+data_frame.columns = ["tm1", "draw", "tm2"]
+data_frame["added"] = data_frame.sum(axis=1)
+#data_frame.plot(grid=True)
+
+plt.plot(data_frame, alpha=.7)
+plt.grid(True)
+plt.xlabel("eiles. nr")
+plt.ylabel("koefficient")
+plt.legend(data_frame.columns)
+plt.title(url)
+plt.show()
